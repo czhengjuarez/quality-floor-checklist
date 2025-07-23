@@ -17,7 +17,6 @@ const firebaseConfig = {
 
 const appId = 'quality-floor-checklist';
 
-
 export default function App() {
     const [todos, setTodos] = useState([]);
     const [inputValue, setInputValue] = useState('');
@@ -157,8 +156,8 @@ export default function App() {
 
     if (showDisclaimer) {
         return (
-            <div className="modal-backdrop">
-                <div className="modal-content">
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
+                <div className="bg-white p-8 rounded-lg max-w-md w-[90%] text-left">
                     <h2 className="text-2xl font-bold mb-4 text-primary-dark">Terms of Use & Disclaimer</h2>
                     <div className="space-y-3 text-sm text-gray-700 mb-6">
                       <p>Welcome to the Quality Floor Checklist Builder. Before you begin, please read the following terms carefully:</p>
@@ -170,7 +169,96 @@ export default function App() {
                       </ol>
                       <p className="font-semibold text-gray-800">By clicking "Acknowledge & Continue," you confirm that you have read, understood, and agree to be bound by these terms.</p>
                     </div>
-                    <button onClick={() => setShowDisclaimer(false)} className="w-full btn bg-primary-dark text-white font-bold py-2 px-4 rounded-lg">Acknowledge & Continue</button>
+                    <button onClick={() => setShowDisclaimer(false)} className="w-full bg-primary-dark text-white font-bold py-2 px-4 rounded-lg hover:bg-primary-main transition">Acknowledge & Continue</button>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+      <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
+          <header className="text-center mb-8">
+              <h1 className="text-4xl sm:text-5xl font-bold text-primary-dark">Quality Floor Checklist</h1>
+              <p className="text-lg text-gray-600 mt-2">A collaborative list of non-negotiable minimums for our projects.</p>
+          </header>
+          <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+              <div className="flex flex-col sm:flex-row gap-4">
+                  <input
+                      type="text"
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && addTodoItem()}
+                      className="flex-grow p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-main focus:border-transparent"
+                      placeholder="Add a new quality standard..."
+                  />
+                  <button onClick={addTodoItem} className="btn bg-primary-dark text-white font-bold py-3 px-6 rounded-lg">
+                      Add Item
+                  </button>
+              </div>
+          </div>
+          <div className="flex flex-wrap justify-center gap-4 mb-6">
+              <button onClick={exportToPDF} className="btn bg-white text-primary-dark font-semibold py-2 px-4 border border-primary-dark rounded-lg shadow">Export to PDF</button>
+              <button onClick={exportToCSV} className="btn bg-white text-primary-dark font-semibold py-2 px-4 border border-primary-dark rounded-lg shadow">Export to CSV</button>
+              <button onClick={downloadAsZip} className="btn bg-primary-dark text-white font-semibold py-2 px-4 border border-primary-dark rounded-lg shadow">App Deploy file as ZIP</button>
+          </div>
+          <div className="bg-white/70 border-2 border-dashed border-primary-main rounded-lg p-4 mb-6">
+              <h3 className="font-bold text-lg text-primary-dark mb-3">How to Use This Checklist</h3>
+              <div className="space-y-4">
+                  <div>
+                      <h4 className="font-semibold text-gray-800">Option 1: Collaborate on This Live Version</h4>
+                      <p className="text-gray-700 text-sm mt-1">
+                          Feel free to use this live, shared version. Simply copy the public URL of this page and send it to your teammates. Everyone with the link can edit this list in real-time.
+                      </p>
+                  </div>
+                  <div>
+                      <h4 className="font-semibold text-gray-800">Option 2: Deploy Your Own Private Version</h4>
+                      <p className="text-gray-700 text-sm mt-1">
+                          For a completely private checklist for your team, you can deploy your own copy of this application. This requires some technical setup (creating a free database project like D1 or Firebase project and deploying the code to a service like Cloudflare Workers).
+                      </p>
+                  </div>
+              </div>
+          </div>
+          
+          {userId && (
+              <div className="text-center my-4 p-2 bg-white/50 rounded-lg">
+                  <p className="text-sm text-gray-700">Your User ID (for reference): <strong className="text-primary-dark font-mono">{userId}</strong></p>
+              </div>
+          )}
+          <div className="space-y-4">
+              {todos.length > 0 ? todos.map(todo => (
+                  <div key={todo.id} className="flex items-center justify-between bg-white p-4 rounded-lg shadow transition-transform transform hover:scale-105">
+                      <span className="flex-grow mr-4">{todo.text}</span>
+                      <button onClick={() => deleteTodoItem(todo.id)} className="ml-4 flex-shrink-0">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-400 hover:text-red-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                      </button>
+                  </div>
+              )) : (
+                  <p className="text-center text-gray-500">
+                      {isAuthReady ? "No quality standards added yet. Be the first!" : "Loading checklist..."}
+                  </p>
+              )}
+          </div>
+      </div>
+    );
+
+    if (showDisclaimer) {
+        return (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
+                <div className="bg-white p-8 rounded-lg max-w-md w-[90%] text-left">
+                    <h2 className="text-2xl font-bold mb-4 text-primary-dark">Terms of Use & Disclaimer</h2>
+                    <div className="space-y-3 text-sm text-gray-700 mb-6">
+                      <p>Welcome to the Quality Floor Checklist Builder. Before you begin, please read the following terms carefully:</p>
+                      <ol className="list-decimal list-inside space-y-2">
+                        <li><strong>Public and Collaborative:</strong> All content, including any checklist items you add or delete, is public and will be visible to anyone who visits this page. Do not enter any private, sensitive, or confidential information.</li>
+                        <li><strong>No Guarantee of Privacy:</strong> There is no expectation of privacy for any data entered into this application. All data is stored in a shared database.</li>
+                        <li><strong>"As-Is" Service:</strong> This tool is provided "as-is" without any warranties. We are not responsible for the availability of the service or the loss of any data you enter.</li>
+                        <li><strong>User Responsibility:</strong> You are solely responsible for the content you contribute. Do not post anything that is unlawful, harmful, or infringes on the rights of others.</li>
+                      </ol>
+                      <p className="font-semibold text-gray-800">By clicking "Acknowledge & Continue," you confirm that you have read, understood, and agree to be bound by these terms.</p>
+                    </div>
+                    <button onClick={() => setShowDisclaimer(false)} className="w-full bg-primary-dark text-white font-bold py-2 px-4 rounded-lg hover:bg-primary-main transition">Acknowledge & Continue</button>
                 </div>
             </div>
         );
@@ -243,4 +331,32 @@ export default function App() {
           </div>
       </div>
     );
+
+    useEffect(() => {
+        try {
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            setDb(getFirestore(app));
+
+            const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    setUserId(user.uid);
+                    setIsAuthReady(true);
+                } else {
+                    try {
+                        await signInAnonymously(auth);
+                    } catch (error) {
+                        setIsAuthReady(false);
+                    }
+                }
+            });
+            return () => unsubscribeAuth();
+        } catch (error) {
+            setIsAuthReady(false);
+        }
+    }, []);
+
+    // ... rest of App component code ...
+
+    // The rest of your code is unchanged; it will be copied as-is from App.js
 }
