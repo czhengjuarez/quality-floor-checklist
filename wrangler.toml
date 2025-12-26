@@ -4,3 +4,7 @@ compatibility_date = "2025-07-22"
 
 [assets]
 directory = "./dist"
+
+[[r2_buckets]]
+bucket_name = "quality-floor-checklist"
+binding = "CHECKLIST_BUCKET"

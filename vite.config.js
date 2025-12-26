@@ -5,5 +5,12 @@ export default defineConfig({
   plugins: [react()],
   server: {
     open: true,
+    proxy: {
+      '/api': {
+        target: 'https://quality-floor-checklist.coscient.workers.dev',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
   },
 });

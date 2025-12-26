@@ -1,6 +1,6 @@
 # Quality Floor Checklist
 
-A collaborative, real-time quality standards checklist builder for teams. Define and maintain your project's non-negotiable quality minimums with a beautiful, modern interface.
+A collaborative, serverless quality standards checklist builder for teams. Define and maintain your project's non-negotiable quality minimums with a beautiful, modern interface powered entirely by Cloudflare.
 
 🔗 **Live Demo:** [https://quality-floor-checklist.coscient.workers.dev](https://quality-floor-checklist.coscient.workers.dev)
 
@@ -18,16 +18,16 @@ A collaborative, real-time quality standards checklist builder for teams. Define
 
 ### 🎨 Modern UI/UX
 - **Dark mode support** with persistent theme preference
-- **Category grouping** with visual headers and icons
+- **Category grouping** with visual headers and SVG icons
 - **Inline editing** - Edit any item directly in the list
 - **Responsive design** - Works on mobile, tablet, and desktop
-- Clean, professional interface inspired by modern design systems
+- Clean, professional interface with grayscale buttons
 
-### 🔄 Real-time Collaboration
-- **Firebase integration** for real-time sync
-- **Anonymous authentication** - No sign-up required
+### 🔄 Collaborative Features
+- **Cloudflare R2 storage** - Simple JSON-based data persistence
+- **Polling updates** - Changes sync every 3 seconds across all users
 - **Public/shared access** - Share URL with your team
-- All changes sync instantly across all users
+- **No authentication required** - Start using immediately
 
 ### 🛠️ Management Tools
 - **Add custom items** to any category
@@ -35,7 +35,7 @@ A collaborative, real-time quality standards checklist builder for teams. Define
 - **Delete items** individually
 - **Load comprehensive defaults** - Reset to full 33-item checklist
 - **Clear all items** - Start fresh with empty list
-- **Stable sorting** - Items maintain consistent order
+- **Stable sorting** - Items maintain consistent order by creation time
 
 ### 📤 Export Options
 - **Export to PDF** - Generate printable checklist
@@ -45,8 +45,7 @@ A collaborative, real-time quality standards checklist builder for teams. Define
 
 ### Prerequisites
 - Node.js 16+ and npm
-- Firebase account (for your own deployment)
-- Cloudflare account (for Workers deployment)
+- Cloudflare account (for your own deployment)
 
 ### Installation
 
@@ -58,7 +57,7 @@ cd quality-floor-checklist
 # Install dependencies
 npm install
 
-# Start development server
+# Start development server (proxies API to production)
 npm run dev
 ```
 
@@ -79,20 +78,18 @@ npm run preview
 
 ## 🔧 Configuration
 
-### Firebase Setup
+### Cloudflare R2 Setup
 
-1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
-2. Enable Firestore Database
-3. Enable Anonymous Authentication
-4. Update `src/AppContent.jsx` with your Firebase config:
+1. Create an R2 bucket:
+```bash
+npx wrangler r2 bucket create quality-floor-checklist
+```
 
-```javascript
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  // ... other config
-};
+2. Update `wrangler.toml` with your bucket binding:
+```toml
+[[r2_buckets]]
+bucket_name = "quality-floor-checklist"
+binding = "CHECKLIST_BUCKET"
 ```
 
 ### Cloudflare Workers Deployment
@@ -102,15 +99,16 @@ const firebaseConfig = {
 npx wrangler deploy
 ```
 
-Update `wrangler.toml` with your configuration if needed.
+The Worker will automatically serve your static assets and API endpoints.
 
 ## 🏗️ Tech Stack
 
 - **React 18** - UI framework
 - **Vite** - Build tool and dev server
 - **Tailwind CSS** - Styling
-- **Firebase** - Real-time database and authentication
-- **Cloudflare Workers** - Hosting and deployment
+- **Cloudflare Workers** - Serverless compute and hosting
+- **Cloudflare R2** - Object storage (S3-compatible)
+- **Hono** - Lightweight web framework for Workers
 - **jsPDF** - PDF export functionality
 
 ## 📁 Project Structure
@@ -118,15 +116,32 @@ Update `wrangler.toml` with your configuration if needed.
 ```
 quality-floor-checklist/
 ├── src/
+│   ├── api/
+│   │   └── r2Client.js          # R2 API client
 │   ├── contexts/
-│   │   └── ThemeContext.jsx    # Dark mode management
-│   ├── App.jsx                  # App wrapper with ThemeProvider
-│   ├── AppContent.jsx           # Main application logic
-│   └── index.css                # Global styles
-├── public/                      # Static assets
-├── dist/                        # Production build
-└── wrangler.toml               # Cloudflare Workers config
+│   │   └── ThemeContext.jsx     # Dark mode management
+│   ├── App.jsx                   # App wrapper with ThemeProvider
+│   ├── AppContent_R2.jsx         # Main application logic with R2
+│   ├── index.ts                  # Worker API endpoints
+│   └── index.css                 # Global styles
+├── public/                       # Static assets
+├── dist/                         # Production build
+├── vite.config.js                # Vite configuration with API proxy
+└── wrangler.toml                 # Cloudflare Workers config
 ```
+
+## 🔌 API Endpoints
+
+The Worker provides a REST API for managing checklist items:
+
+- `GET /api/todos` - Fetch all items
+- `POST /api/todos` - Add a new item
+- `POST /api/todos/bulk` - Add multiple items (for loading defaults)
+- `PUT /api/todos/:id` - Update an item
+- `DELETE /api/todos/:id` - Delete an item
+- `DELETE /api/todos` - Clear all items
+
+All data is stored in R2 as a single JSON file (`todos.json`).
 
 ## 🎯 Use Cases
 
@@ -135,6 +150,20 @@ quality-floor-checklist/
 - **Product teams** - Track feature quality requirements
 - **QA teams** - Checklist for testing standards
 - **DevOps teams** - Deployment and security standards
+
+## 🏛️ Architecture
+
+### Serverless & Simple
+- **No database required** - All data stored as JSON in R2
+- **No authentication** - Public by default for easy collaboration
+- **Fast cold starts** - Worker starts in ~1ms
+- **Global edge network** - Deployed to 300+ Cloudflare locations
+
+### Data Flow
+1. Frontend makes API calls to Worker endpoints
+2. Worker reads/writes JSON from/to R2 bucket
+3. Frontend polls every 3 seconds for updates
+4. Changes appear across all connected users
 
 ## 🤝 Contributing
 
@@ -156,9 +185,19 @@ This project is open source and available under the MIT License.
 ## 💡 Tips
 
 - **Public by default** - All data is public and shared. Don't enter sensitive information.
-- **Deploy your own** - For private team use, deploy your own instance with a separate Firebase project.
-- **Customize categories** - Edit `src/AppContent.jsx` to add/modify default categories and items.
+- **Deploy your own** - For private team use, deploy your own instance with a separate R2 bucket.
+- **Customize categories** - Edit `src/AppContent_R2.jsx` to add/modify default categories and items.
 - **Export regularly** - Use PDF/CSV export to backup your standards.
+- **Local development** - API calls proxy to production, so you can test locally without setting up R2.
+
+## 🚀 Why R2 Over Firebase?
+
+We migrated from Firebase to Cloudflare R2 for several reasons:
+- **Simpler architecture** - No complex database queries, just JSON storage
+- **Lower costs** - R2 is extremely cost-effective for small datasets
+- **Faster cold starts** - No Firebase SDK overhead
+- **All-in-one platform** - Workers + R2 + hosting on Cloudflare
+- **No vendor lock-in** - R2 is S3-compatible
 
 ---
 
