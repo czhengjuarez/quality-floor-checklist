@@ -8,3 +8,6 @@ directory = "./dist"
 [[r2_buckets]]
 bucket_name = "quality-floor-checklist"
 binding = "CHECKLIST_BUCKET"
+
+[ai]
+binding = "AI"

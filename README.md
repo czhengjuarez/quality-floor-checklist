@@ -6,6 +6,16 @@ A collaborative, serverless quality standards checklist builder for teams. Defin
 
 ## ✨ Features
 
+### 🤖 AI-Powered Generation
+- **Generate custom checklists** tailored to your project using Cloudflare Workers AI
+- **Context-aware standards** - Describe your project type, industry, tech stack, and compliance needs
+- **25-35 intelligent items** generated based on your specific requirements
+- **Powered by Llama 3.1** - Fast, accurate, and runs on Cloudflare's edge network
+- **Examples:**
+  - Healthcare app → HIPAA compliance, PHI encryption, audit logging
+  - Fintech → PCI-DSS, financial regulations, security standards
+  - E-commerce → GDPR, payment security, performance optimization
+
 ### 📋 Comprehensive Default Standards
 - **33 quality standards** across 7 categories:
   - Code Review Standards (4 items)
@@ -21,7 +31,8 @@ A collaborative, serverless quality standards checklist builder for teams. Defin
 - **Category grouping** with visual headers and SVG icons
 - **Inline editing** - Edit any item directly in the list
 - **Responsive design** - Works on mobile, tablet, and desktop
-- Clean, professional interface with grayscale buttons
+- **Clean interface** - Streamlined buttons with icons in header
+- **Professional design** - Bot icon for AI features, download icons for exports
 
 ### 🔄 Collaborative Features
 - **Cloudflare R2 storage** - Simple JSON-based data persistence
@@ -30,16 +41,17 @@ A collaborative, serverless quality standards checklist builder for teams. Defin
 - **No authentication required** - Start using immediately
 
 ### 🛠️ Management Tools
+- **AI Generate** - Create custom checklists with AI
 - **Add custom items** to any category
 - **Edit items** inline with save/cancel options
 - **Delete items** individually
-- **Load comprehensive defaults** - Reset to full 33-item checklist
+- **Load defaults** - Reset to full 33-item checklist
 - **Clear all items** - Start fresh with empty list
 - **Stable sorting** - Items maintain consistent order by creation time
 
 ### 📤 Export Options
-- **Export to PDF** - Generate printable checklist
-- **Export to CSV** - Import into spreadsheets
+- **Export to PDF** - Generate printable checklist (header button)
+- **Export to CSV** - Import into spreadsheets (header button)
 
 ## 🚀 Getting Started
 
@@ -107,6 +119,7 @@ The Worker will automatically serve your static assets and API endpoints.
 - **Vite** - Build tool and dev server
 - **Tailwind CSS** - Styling
 - **Cloudflare Workers** - Serverless compute and hosting
+- **Cloudflare Workers AI** - AI-powered checklist generation (Llama 3.1)
 - **Cloudflare R2** - Object storage (S3-compatible)
 - **Hono** - Lightweight web framework for Workers
 - **jsPDF** - PDF export functionality
@@ -140,6 +153,7 @@ The Worker provides a REST API for managing checklist items:
 - `PUT /api/todos/:id` - Update an item
 - `DELETE /api/todos/:id` - Delete an item
 - `DELETE /api/todos` - Clear all items
+- `POST /api/generate-checklist` - Generate AI-powered checklist based on project context
 
 All data is stored in R2 as a single JSON file (`todos.json`).
 

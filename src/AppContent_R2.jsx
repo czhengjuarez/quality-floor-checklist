@@ -15,6 +15,15 @@ export default function AppContent() {
     const [isLoading, setIsLoading] = useState(true);
     const [isOperating, setIsOperating] = useState(false);
     const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+    const [showAIForm, setShowAIForm] = useState(false);
+    const [aiContext, setAiContext] = useState({
+        projectType: '',
+        industry: '',
+        teamSize: '',
+        techStack: '',
+        compliance: '',
+        additionalContext: ''
+    });
 
     const generateId = () => {
         return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -240,6 +249,57 @@ export default function AppContent() {
         setIsOperating(false);
     };
 
+    const generateAIChecklist = async () => {
+        setIsOperating(true);
+        setIsLoading(true);
+        setShowAIForm(false);
+        
+        try {
+            const response = await fetch(`${window.location.origin}/api/generate-checklist`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(aiContext)
+            });
+            
+            const data = await response.json();
+            
+            if (data.success && data.items) {
+                await r2Client.clearAllTodos();
+                setTodos([]);
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                const todos = data.items.map(item => ({
+                    id: generateId(),
+                    text: item.text,
+                    category: item.category,
+                    createdAt: new Date().toISOString(),
+                    creatorId: 'ai'
+                }));
+                
+                const bulkResponse = await fetch(`${window.location.origin}/api/todos/bulk`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ todos })
+                });
+                
+                if (bulkResponse.ok) {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    const fetchedTodos = await r2Client.getTodos();
+                    setTodos(fetchedTodos);
+                    setHasLoadedOnce(true);
+                }
+            } else {
+                alert('Failed to generate checklist. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error generating AI checklist:', error);
+            alert('Failed to generate checklist. Please try again.');
+        }
+        
+        setIsLoading(false);
+        setIsOperating(false);
+    };
+
     if (showDisclaimer) {
         return (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
@@ -280,17 +340,43 @@ export default function AppContent() {
                                 Define your team's non-negotiable quality minimums
                             </p>
                         </div>
-                        <button
-                            onClick={toggleDarkMode}
-                            className={`p-2 rounded-lg transition-colors ${
-                                isDarkMode 
-                                    ? 'bg-gray-700 hover:bg-gray-600 text-yellow-300' 
-                                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                            }`}
-                            aria-label="Toggle dark mode"
-                        >
-                            {isDarkMode ? '☀️' : '🌙'}
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={exportToPDF}
+                                className={`px-3 py-2 rounded-lg transition-colors flex items-center gap-2 ${
+                                    isDarkMode 
+                                        ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
+                                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                                }`}
+                                aria-label="Export to PDF"
+                            >
+                                <img src="/download-outline.svg" alt="Download" className="w-4 h-4" />
+                                <span className="text-sm font-semibold">PDF</span>
+                            </button>
+                            <button
+                                onClick={exportToCSV}
+                                className={`px-3 py-2 rounded-lg transition-colors flex items-center gap-2 ${
+                                    isDarkMode 
+                                        ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
+                                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                                }`}
+                                aria-label="Export to CSV"
+                            >
+                                <img src="/download-outline.svg" alt="Download" className="w-4 h-4" />
+                                <span className="text-sm font-semibold">CSV</span>
+                            </button>
+                            <button
+                                onClick={toggleDarkMode}
+                                className={`p-2 rounded-lg transition-colors ${
+                                    isDarkMode 
+                                        ? 'bg-gray-700 hover:bg-gray-600 text-yellow-300' 
+                                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                                }`}
+                                aria-label="Toggle dark mode"
+                            >
+                                {isDarkMode ? '☀️' : '🌙'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -322,31 +408,24 @@ export default function AppContent() {
               </div>
             </div>
 
-            {/* Export Buttons */}
-            <div className="flex flex-wrap justify-center gap-4 mb-6">
+            {/* Action Buttons */}
+            <div className="flex flex-wrap justify-center gap-3 mb-6">
               <button 
-                onClick={exportToPDF} 
-                className={`font-semibold py-2 px-4 border rounded-lg shadow transition-colors ${
+                onClick={() => setShowAIForm(true)} 
+                className={`font-semibold py-2 px-3 border rounded-lg shadow transition-colors flex items-center gap-2 ${
                   isDarkMode
                     ? 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600'
                     : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
                 }`}
               >
-                Export to PDF
-              </button>
-              <button 
-                onClick={exportToCSV} 
-                className={`font-semibold py-2 px-4 border rounded-lg shadow transition-colors ${
-                  isDarkMode
-                    ? 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600'
-                    : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
-                }`}
-              >
-                Export to CSV
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                AI Generate
               </button>
               <button 
                 onClick={clearAllAndReset} 
-                className={`font-semibold py-2 px-4 border rounded-lg shadow transition-colors flex items-center gap-2 ${
+                className={`font-semibold py-2 px-3 border rounded-lg shadow transition-colors flex items-center gap-2 ${
                   isDarkMode
                     ? 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600'
                     : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
@@ -355,11 +434,11 @@ export default function AppContent() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                Load Comprehensive Defaults
+                Defaults
               </button>
               <button 
                 onClick={clearAllItems} 
-                className={`font-semibold py-2 px-4 border rounded-lg shadow transition-colors flex items-center gap-2 ${
+                className={`font-semibold py-2 px-3 border rounded-lg shadow transition-colors flex items-center gap-2 ${
                   isDarkMode
                     ? 'bg-red-900 text-red-200 border-red-700 hover:bg-red-800'
                     : 'bg-red-50 text-red-700 border-red-300 hover:bg-red-100'
@@ -368,9 +447,149 @@ export default function AppContent() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
-                Clear All Items
+                Clear All
               </button>
             </div>
+
+            {/* AI Generation Form Modal */}
+            {showAIForm && (
+              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
+                <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-8 rounded-lg max-w-2xl w-[90%] max-h-[90vh] overflow-y-auto`}>
+                  <div className="flex items-center gap-3 mb-4">
+                    <img src="/bot.svg" alt="AI Bot" className="w-8 h-8" />
+                    <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      Generate AI-Powered Checklist
+                    </h2>
+                  </div>
+                  <p className={`text-sm mb-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                    Describe your project and AI will generate a tailored quality checklist for you.
+                  </p>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className={`block text-sm font-semibold mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                        Project Type
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g., Web app, Mobile app, API, Desktop app"
+                        value={aiContext.projectType}
+                        onChange={(e) => setAiContext({...aiContext, projectType: e.target.value})}
+                        className={`w-full p-3 border rounded-lg ${
+                          isDarkMode 
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                            : 'bg-white border-gray-300 text-gray-900'
+                        }`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={`block text-sm font-semibold mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                        Industry
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g., Healthcare, Finance, E-commerce, Education"
+                        value={aiContext.industry}
+                        onChange={(e) => setAiContext({...aiContext, industry: e.target.value})}
+                        className={`w-full p-3 border rounded-lg ${
+                          isDarkMode 
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                            : 'bg-white border-gray-300 text-gray-900'
+                        }`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={`block text-sm font-semibold mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                        Team Size
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g., 5 people, 20+ engineers, Solo developer"
+                        value={aiContext.teamSize}
+                        onChange={(e) => setAiContext({...aiContext, teamSize: e.target.value})}
+                        className={`w-full p-3 border rounded-lg ${
+                          isDarkMode 
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                            : 'bg-white border-gray-300 text-gray-900'
+                        }`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={`block text-sm font-semibold mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                        Tech Stack
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g., React, Node.js, PostgreSQL, AWS"
+                        value={aiContext.techStack}
+                        onChange={(e) => setAiContext({...aiContext, techStack: e.target.value})}
+                        className={`w-full p-3 border rounded-lg ${
+                          isDarkMode 
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                            : 'bg-white border-gray-300 text-gray-900'
+                        }`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={`block text-sm font-semibold mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                        Compliance Requirements
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g., HIPAA, GDPR, SOC 2, PCI-DSS"
+                        value={aiContext.compliance}
+                        onChange={(e) => setAiContext({...aiContext, compliance: e.target.value})}
+                        className={`w-full p-3 border rounded-lg ${
+                          isDarkMode 
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                            : 'bg-white border-gray-300 text-gray-900'
+                        }`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={`block text-sm font-semibold mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                        Additional Context
+                      </label>
+                      <textarea
+                        rows="3"
+                        placeholder="Any other important details about your project..."
+                        value={aiContext.additionalContext}
+                        onChange={(e) => setAiContext({...aiContext, additionalContext: e.target.value})}
+                        className={`w-full p-3 border rounded-lg ${
+                          isDarkMode 
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                            : 'bg-white border-gray-300 text-gray-900'
+                        }`}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 mt-6">
+                    <button
+                      onClick={generateAIChecklist}
+                      className="flex-1 bg-primary hover:bg-opacity-90 text-white font-bold py-3 px-6 rounded-lg transition-all"
+                    >
+                      Generate Checklist
+                    </button>
+                    <button
+                      onClick={() => setShowAIForm(false)}
+                      className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+                        isDarkMode
+                          ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Instructions */}
             <div className={`${isDarkMode ? 'bg-gray-800/70 border-gray-700' : 'bg-white/70 border-primary-main'} border-2 border-dashed rounded-lg p-4 mb-6`}>

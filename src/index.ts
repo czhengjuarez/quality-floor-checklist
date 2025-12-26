@@ -3,9 +3,11 @@ import { serveStatic } from 'hono/cloudflare-workers'
 import { cors } from 'hono/cors'
 
 type R2Bucket = any
+type AiBinding = any
 
 interface Env {
   CHECKLIST_BUCKET: R2Bucket
+  AI: AiBinding
 }
 
 interface TodoItem {
@@ -164,6 +166,108 @@ app.delete('/api/todos', async (c) => {
   } catch (error) {
     console.error('Error clearing todos:', error)
     return c.json({ success: false, error: 'Failed to clear todos' }, 500)
+  }
+})
+
+// Generate AI-powered checklist
+app.post('/api/generate-checklist', async (c) => {
+  try {
+    const body = await c.req.json()
+    const { projectType, industry, teamSize, techStack, compliance, additionalContext } = body
+
+    const prompt = `You are a quality assurance expert. Generate a comprehensive quality checklist for the following project:
+
+Project Type: ${projectType || 'General software project'}
+Industry: ${industry || 'General'}
+Team Size: ${teamSize || 'Not specified'}
+Tech Stack: ${techStack || 'Not specified'}
+Compliance Requirements: ${compliance || 'None specified'}
+Additional Context: ${additionalContext || 'None'}
+
+Generate 25-35 specific, actionable quality standards organized into relevant categories. Each item should be:
+- Specific and measurable
+- Relevant to the project context
+- Actionable (something the team can verify)
+
+Return ONLY a valid JSON array with this exact structure (no markdown, no explanations):
+[
+  {"category": "Category Name", "text": "Specific quality standard"},
+  {"category": "Category Name", "text": "Another quality standard"}
+]
+
+Categories should be relevant to the project (e.g., Code Review, Testing, Security, Performance, Accessibility, Compliance, Documentation, etc.)`
+
+    let aiResponse
+    try {
+      aiResponse = await c.env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+        messages: [
+          { role: 'system', content: 'You are a quality assurance expert who generates structured JSON checklists.' },
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 2048
+      })
+    } catch (aiError) {
+      console.error('AI API Error:', aiError)
+      return c.json({ 
+        success: false, 
+        error: 'AI service error: ' + (aiError.message || 'Unknown error')
+      }, 500)
+    }
+
+    let items = []
+    try {
+      console.log('AI Response:', JSON.stringify(aiResponse))
+      const responseText = aiResponse.response || aiResponse.result?.response || JSON.stringify(aiResponse)
+      console.log('Response text:', responseText)
+      
+      // Extract JSON array from response
+      const jsonMatch = responseText.match(/\[[\s\S]*\]/)
+      if (jsonMatch) {
+        let jsonText = jsonMatch[0]
+        
+        // Handle truncated JSON by attempting to close incomplete objects/arrays
+        try {
+          items = JSON.parse(jsonText)
+        } catch (e) {
+          // Try to fix truncated JSON by closing incomplete strings and objects
+          console.log('Attempting to fix truncated JSON...')
+          
+          // Find the last complete item before truncation
+          const lastCompleteMatch = jsonText.match(/\{[^}]*\}(?=\s*,?\s*\{|\s*\])/g)
+          if (lastCompleteMatch && lastCompleteMatch.length > 0) {
+            // Reconstruct with only complete items
+            jsonText = '[' + lastCompleteMatch.join(',') + ']'
+            items = JSON.parse(jsonText)
+            console.log(`Recovered ${items.length} complete items from truncated response`)
+          } else {
+            throw e
+          }
+        }
+      } else {
+        items = JSON.parse(responseText)
+      }
+      
+      if (!Array.isArray(items) || items.length === 0) {
+        throw new Error('Invalid items format or no items generated')
+      }
+    } catch (parseError) {
+      console.error('Error parsing AI response:', parseError)
+      console.error('Raw response:', aiResponse)
+      return c.json({ 
+        success: false, 
+        error: 'Failed to parse AI response',
+        details: String(parseError),
+        rawResponse: aiResponse 
+      }, 500)
+    }
+
+    return c.json({ success: true, items })
+  } catch (error) {
+    console.error('Error generating checklist:', error)
+    return c.json({ 
+      success: false, 
+      error: error.message || 'Failed to generate checklist'
+    }, 500)
   }
 })
 
