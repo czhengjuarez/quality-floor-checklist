@@ -1,70 +1,165 @@
-# Getting Started with Create React App
+# Quality Floor Checklist
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A collaborative, real-time quality standards checklist builder for teams. Define and maintain your project's non-negotiable quality minimums with a beautiful, modern interface.
 
-## Available Scripts
+🔗 **Live Demo:** [https://quality-floor-checklist.coscient.workers.dev](https://quality-floor-checklist.coscient.workers.dev)
 
-In the project directory, you can run:
+## ✨ Features
 
-### `npm start`
+### 📋 Comprehensive Default Standards
+- **33 quality standards** across 7 categories:
+  - Code Review Standards (4 items)
+  - Testing Standards (4 items)
+  - Accessibility Standards (5 items)
+  - Performance Standards (5 items)
+  - Security Standards (4 items)
+  - Design Standards (5 items)
+  - Documentation Standards (4 items)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### 🎨 Modern UI/UX
+- **Dark mode support** with persistent theme preference
+- **Category grouping** with visual headers and icons
+- **Inline editing** - Edit any item directly in the list
+- **Responsive design** - Works on mobile, tablet, and desktop
+- Clean, professional interface inspired by modern design systems
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### 🔄 Real-time Collaboration
+- **Firebase integration** for real-time sync
+- **Anonymous authentication** - No sign-up required
+- **Public/shared access** - Share URL with your team
+- All changes sync instantly across all users
 
-### `npm test`
+### 🛠️ Management Tools
+- **Add custom items** to any category
+- **Edit items** inline with save/cancel options
+- **Delete items** individually
+- **Load comprehensive defaults** - Reset to full 33-item checklist
+- **Clear all items** - Start fresh with empty list
+- **Stable sorting** - Items maintain consistent order
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### 📤 Export Options
+- **Export to PDF** - Generate printable checklist
+- **Export to CSV** - Import into spreadsheets
 
-### `npm run build`
+## 🚀 Getting Started
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Prerequisites
+- Node.js 16+ and npm
+- Firebase account (for your own deployment)
+- Cloudflare account (for Workers deployment)
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Installation
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```bash
+# Clone the repository
+git clone https://github.com/czhengjuarez/quality-floor-checklist.git
+cd quality-floor-checklist
 
-### `npm run eject`
+# Install dependencies
+npm install
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+# Start development server
+npm run dev
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+The app will be available at `http://localhost:5173`
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### Development
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+```bash
+# Run development server
+npm run dev
 
-## Learn More
+# Build for production
+npm run build
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+# Preview production build
+npm run preview
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 🔧 Configuration
 
-### Code Splitting
+### Firebase Setup
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
+2. Enable Firestore Database
+3. Enable Anonymous Authentication
+4. Update `src/AppContent.jsx` with your Firebase config:
 
-### Analyzing the Bundle Size
+```javascript
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  // ... other config
+};
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### Cloudflare Workers Deployment
 
-### Making a Progressive Web App
+```bash
+# Deploy to Cloudflare Workers
+npx wrangler deploy
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+Update `wrangler.toml` with your configuration if needed.
 
-### Advanced Configuration
+## 🏗️ Tech Stack
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+- **React 18** - UI framework
+- **Vite** - Build tool and dev server
+- **Tailwind CSS** - Styling
+- **Firebase** - Real-time database and authentication
+- **Cloudflare Workers** - Hosting and deployment
+- **jsPDF** - PDF export functionality
 
-### Deployment
+## 📁 Project Structure
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+```
+quality-floor-checklist/
+├── src/
+│   ├── contexts/
+│   │   └── ThemeContext.jsx    # Dark mode management
+│   ├── App.jsx                  # App wrapper with ThemeProvider
+│   ├── AppContent.jsx           # Main application logic
+│   └── index.css                # Global styles
+├── public/                      # Static assets
+├── dist/                        # Production build
+└── wrangler.toml               # Cloudflare Workers config
+```
 
-### `npm run build` fails to minify
+## 🎯 Use Cases
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- **Development teams** - Define coding standards and quality gates
+- **Design teams** - Maintain design system compliance
+- **Product teams** - Track feature quality requirements
+- **QA teams** - Checklist for testing standards
+- **DevOps teams** - Deployment and security standards
+
+## 🤝 Contributing
+
+Contributions are welcome! Feel free to:
+- Report bugs
+- Suggest new features
+- Submit pull requests
+- Improve documentation
+
+## 📄 License
+
+This project is open source and available under the MIT License.
+
+## 🔗 Links
+
+- **Live App:** [https://quality-floor-checklist.coscient.workers.dev](https://quality-floor-checklist.coscient.workers.dev)
+- **GitHub:** [https://github.com/czhengjuarez/quality-floor-checklist](https://github.com/czhengjuarez/quality-floor-checklist)
+
+## 💡 Tips
+
+- **Public by default** - All data is public and shared. Don't enter sensitive information.
+- **Deploy your own** - For private team use, deploy your own instance with a separate Firebase project.
+- **Customize categories** - Edit `src/AppContent.jsx` to add/modify default categories and items.
+- **Export regularly** - Use PDF/CSV export to backup your standards.
+
+---
+
+Built with ❤️ for teams who care about quality
